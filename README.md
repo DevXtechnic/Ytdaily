@@ -1,8 +1,13 @@
-# yt-daily
+# 📺 yt-daily
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Platform: Linux](https://img.shields.io/badge/platform-Linux-orange.svg)](https://www.kernel.org/)
 
-A powerful, interactive YouTube Feed Downloader that monitors channels and playlists for new content and downloads them automatically in any desired quality (360p, 480p, 720p, 1080p, 1440p, 2160p) with subtitles, SponsorBlock, and parallel download support.
+**yt-daily** is a high-performance, interactive YouTube automation engine designed for creators and enthusiasts. It transforms your local machine into a smart media server that monitors your favorite channels and playlists, downloading content in crystal-clear quality while applying professional-grade filtering and optimization.
 
-## Visual Tour
+---
+
+## 🖼️ Visual Tour
 
 ### 🖥️ Core Interface
 | Main Menu | Statistics Dashboard |
@@ -23,29 +28,26 @@ A powerful, interactive YouTube Feed Downloader that monitors channels and playl
 | :---: | :---: |
 | ![Settings](screenshots/settings.png) | ![Playlist Management](screenshots/playlist_mgmt.png) |
 
-| Channel Management | Adding a Channel |
-| :---: | :---: |
-| ![Channel Management](screenshots/channel_mgmt.png) | ![Add Channel](screenshots/add_channel.png) |
+---
 
-## Features
+## 🛠️ How it Works: The Architecture
 
-- 🚀 **Smart Channel Tracking**: Automatically detects and downloads new videos from your followed channels.
-- 📋 **Playlist Support**: Monitor and download entire playlists with resume support.
-- ⚡ **Parallel Downloads**: Download multiple videos simultaneously to maximize your bandwidth.
-- 🎭 **Privacy & Cleanup**: Downloads are kept private, and old videos can be automatically cleaned up.
-- 🎙️ **Audio/Podcast Mode**: Option to download as high-quality MP3 (320kbps).
-- 🎬 **Quality Control**: Configurable maximum resolution (default 720p).
-- 🧹 **SponsorBlock**: Automatically remove sponsors, intros, outros, and more.
-- 📊 **Statistics**: Detailed TUI for tracking your download history and storage usage.
+`yt-daily` is built on a "Silent Automation" philosophy. It uses a **State-Based Tracking System** to ensure you never miss a video and never download a duplicate.
 
-## Requirements
+### 1. The Intelligent Monitor
+The engine maintains a local JSON database of every video it has ever encountered. When a scan starts, it fetches the latest activity from your monitored channels and compares signatures to identify "Gaps" in your collection.
 
-- Python 3.7+
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
-- [ffmpeg](https://ffmpeg.org/)
-- python-rich library
+### 2. Parallel Processing Engine
+Unlike traditional downloaders that process one file at a time, `yt-daily` utilizes a multi-threaded parallel downloader. It intelligently distributes your bandwidth across multiple streams to finish your daily queue in minutes rather than hours.
 
-The easiest way to install `yt-daily` is to use the provided installer script which handles dependencies, aliases, and automation setup:
+### 3. The SponsorBlock Integration
+Every download is automatically scrubbed of non-content segments (Sponsors, Intros, Outros, Interaction Reminders) using the SponsorBlock API, saving you hours of watch time.
+
+---
+
+## 🚀 One-Click Installation
+
+Designed to work across **Arch, Debian, Ubuntu, and Fedora** based distributions. The installer handles system dependencies, Python environment isolation (PEP 668), and shell integration.
 
 ```bash
 git clone https://github.com/DevXtechnic/yt-daily.git
@@ -54,25 +56,48 @@ chmod +x install.sh
 ./install.sh
 ```
 
-## Usage
+### What the installer does:
+- Checks for and installs `yt-dlp`, `ffmpeg`, and `python-rich` using your native package manager.
+- Sets up a robust directory structure in `~/.local/share/yt-daily/`.
+- Injects `ytdaily` aliases into your shell (`bash`, `zsh`, or `fish`).
+- **Initializes the Automation Engine (Systemd).**
 
-Run the script in interactive mode to manage your channels and settings:
+---
 
+## ⏰ The Automation Engine (Systemd)
+
+After installation, `yt-daily` operates as a silent background service. 
+
+- **Trigger**: The service runs once every 24 hours.
+- **Boot Safety**: It includes a **5-minute delay** after your system boots to ensure network stability before starting the scan.
+- **Resource Management**: Uses `Nice=19` and `IOSchedulingClass=idle` to ensure it never slows down your PC while you are working.
+
+You can check the status of your automated downloader at any time:
 ```bash
-python3 YT_daily.py --interactive
+systemctl --user status ytdaily.service
 ```
 
-### Options:
-- **Run automatic download**: Checks all monitored channels for new videos.
-- **Manage channels**: Add or remove YouTube channels by their handle or ID.
-- **Manage playlists**: Track large playlists for new updates.
-- **Download single video/audio**: One-off downloads via URL.
-- **Settings**: Configure parallel downloads, quality, and more.
+---
 
-## Configuration
+## ✨ Key Features
 
-Settings and history are stored in `~/.YT_log/`. The script automatically handles directory renaming with duration tags for easier media management.
+- 🎯 **Multi-Quality Support**: Target any resolution from 360p to 4K (2160p).
+- 📻 **Podcast Automation**: Automatically converts specific sources to high-fidelity 320kbps MP3s.
+- 🧹 **Dynamic Cleanup**: Set a retention policy (e.g., 60 days) to keep your storage lean.
+- 🌍 **Subtitles & Metadata**: Embeds official and auto-generated subtitles, thumbnails, and metadata into the MP4 container.
 
-## License
+---
 
-Unlicense (Public Domain)
+## 📜 Technical Stack
+
+- **Logic**: Python 3
+- **UI**: Rich TUI Framework
+- **Engine**: yt-dlp & FFmpeg
+- **Scheduling**: Systemd User Timers
+- **Package Management**: Native Linux Bridge (Pacman/Apt/Dnf)
+
+---
+
+## ⚖️ License
+
+[Unlicense](LICENSE) (Public Domain) - Free to use, modify, and distribute for any purpose.
