@@ -4,17 +4,28 @@ A powerful, interactive YouTube Feed Downloader that monitors channels and playl
 
 ## Visual Tour
 
-| Main Menu | Configuration & Scan |
+### 🖥️ Core Interface
+| Main Menu | Statistics Dashboard |
 | :---: | :---: |
-| ![Main Menu](screenshots/main_menu.png) | ![Config & Scan](screenshots/config_scan.png) |
+| ![Main Menu](screenshots/main_menu.png) | ![Statistics](screenshots/statistics.png) |
+
+### 🚀 Smart Tracking & Downloads
+| Configuration Scan | Scan Results |
+| :---: | :---: |
+| ![Config Scan](screenshots/config_scan.png) | ![Scan Results](screenshots/scan_results.png) |
+
+### ⚡ Advanced Features
+| Parallel Download Progress | Detailed Download Info |
+| :---: | :---: |
+| ![Parallel Progress](screenshots/parallel_download.png) | ![Download Info](screenshots/download_info.png) |
+
+| Customizable Settings | Playlist Management |
+| :---: | :---: |
+| ![Settings](screenshots/settings.png) | ![Playlist Management](screenshots/playlist_mgmt.png) |
 
 | Channel Management | Adding a Channel |
 | :---: | :---: |
 | ![Channel Management](screenshots/channel_mgmt.png) | ![Add Channel](screenshots/add_channel.png) |
-
-| Scan Results |
-| :---: |
-| ![Scan Results](screenshots/scan_results.png) |
 
 ## Features
 
