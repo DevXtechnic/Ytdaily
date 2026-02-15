@@ -20,21 +20,14 @@ A powerful, interactive YouTube Feed Downloader that monitors channels and playl
 - [ffmpeg](https://ffmpeg.org/)
 - python-rich library
 
-## Installation
+The easiest way to install `yt-daily` is to use the provided installer script which handles dependencies, aliases, and automation setup:
 
-1. Install system dependencies:
-   ```bash
-   # Arch Linux
-   sudo pacman -S yt-dlp ffmpeg
-   
-   # Ubuntu/Debian
-   sudo apt install yt-dlp ffmpeg
-   ```
-
-2. Install python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/DevXtechnic/yt-daily.git
+cd yt-daily
+chmod +x install.sh
+./install.sh
+```
 
 ## Usage
 
@@ -44,41 +37,12 @@ Run the script in interactive mode to manage your channels and settings:
 python3 YT_daily.py --interactive
 ```
 
-### Shell Alias (Recommended)
-
-To run the script conveniently from any directory, add an alias to your shell configuration (`.bashrc`, `.zshrc`, or `config.fish`). 
-
-Example for **Bash/Zsh**:
-```bash
-alias ytdaily='python3 /path/to/YT_daily.py --interactive'
-```
-
-Example for **Fish**:
-```fish
-function ytdaily
-    python3 /path/to/YT_daily.py --interactive
-end
-```
-(See `shell_configs/` for more templates)
-
 ### Options:
 - **Run automatic download**: Checks all monitored channels for new videos.
 - **Manage channels**: Add or remove YouTube channels by their handle or ID.
 - **Manage playlists**: Track large playlists for new updates.
 - **Download single video/audio**: One-off downloads via URL.
 - **Settings**: Configure parallel downloads, quality, and more.
-
-## Automation (Linux/Systemd)
-
-To make the script run automatically once per day:
-
-1. Copy the files from the `systemd/` directory to `/etc/systemd/system/`.
-2. Edit `/etc/systemd/system/ytdaily.service` to update the `User` and `ExecStart` path.
-3. Enable and start the timer:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now ytdaily.timer
-   ```
 
 ## Configuration
 

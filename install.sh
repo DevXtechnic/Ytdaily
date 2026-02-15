@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# yt-daily Installer Script
+# Works on Arch, Debian/Ubuntu, Fedora
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BLUE}🚀 Starting yt-daily installation...${NC}"
+
+# 1. Detect Package Manager and Install System Dependencies
+echo -e "${BLUE}🔍 Checking for system dependencies...${NC}"
+if command -v pacman >/dev/null; then
+    sudo pacman -S --needed --noconfirm yt-dlp ffmpeg python-pip
+elif command -v apt-get >/dev/null; then
+    sudo apt-get update
+    sudo apt-get install -y yt-dlp ffmpeg python3-pip
+elif command -v dnf >/dev/null; then
+    sudo dnf install -y yt-dlp ffmpeg python3-pip
+else
+    echo -e "${RED}❌ Multi-distro support: Package manager not recognized. Please install yt-dlp, ffmpeg, and python3-pip manually.${NC}"
+fi
+
+# 2. Install Python Dependencies
+echo -e "${BLUE}📦 Installing Python libraries...${NC}"
+pip3 install rich yt-dlp --upgrade --user || pip install rich yt-dlp --upgrade --user
+
+# 3. Create Application Directory
+INSTALL_DIR="$HOME/.local/share/yt-daily"
+BIN_DIR="$HOME/.local/bin"
+echo -e "${BLUE}📂 Creating directories in $INSTALL_DIR...${NC}"
+mkdir -p "$INSTALL_DIR"
+mkdir -p "$BIN_DIR"
+
+# 4. Copy the script
+echo -e "${BLUE}📄 Copying YT_daily.py...${NC}"
+cp YT_daily.py "$INSTALL_DIR/YT_daily.py"
+chmod +x "$INSTALL_DIR/YT_daily.py"
+
+# 5. Create a binary link/launcher
+echo -e "${BLUE}🔨 Creating launcher in $BIN_DIR/ytdaily...${NC}"
+cat <<EOF > "$BIN_DIR/ytdaily"
+#!/bin/bash
+python3 "$INSTALL_DIR/YT_daily.py" "\$@"
+EOF
+chmod +x "$BIN_DIR/ytdaily"
+
+# 6. Setup Shell Aliases
+echo -e "${BLUE}🐚 Setting up shell aliases...${NC}"
+
+# Bash
+if [ -f "$HOME/.bashrc" ]; then
+    if ! grep -q "alias ytdaily=" "$HOME/.bashrc"; then
+        echo "alias ytdaily='$BIN_DIR/ytdaily --interactive'" >> "$HOME/.bashrc"
+    fi
+fi
+
+# Zsh
+if [ -f "$HOME/.zshrc" ]; then
+    if ! grep -q "alias ytdaily=" "$HOME/.zshrc"; then
+        echo "alias ytdaily='$BIN_DIR/ytdaily --interactive'" >> "$HOME/.zshrc"
+    fi
+fi
+
+# Fish
+if command -v fish >/dev/null; then
+    mkdir -p "$HOME/.config/fish/functions"
+    cat <<EOF > "$HOME/.config/fish/functions/ytdaily.fish"
+function ytdaily
+    $BIN_DIR/ytdaily --interactive \$argv
+end
+EOF
+fi
+
+# 7. Setup Systemd Automation
+echo -e "${BLUE}⏰ Setting up systemd daily auto-download...${NC}"
+mkdir -p "$HOME/.config/systemd/user"
+
+# Create Service
+cat <<EOF > "$HOME/.config/systemd/user/ytdaily.service"
+[Unit]
+Description=yt-daily Feed Downloader
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=$BIN_DIR/ytdaily
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=default.target
+EOF
+
+# Create Timer
+cat <<EOF > "$HOME/.config/systemd/user/ytdaily.timer"
+[Unit]
+Description=Run yt-daily once per day
+
+[Timer]
+OnBootSec=5min
+Persistent=true
+AccuracySec=1h
+
+[Install]
+WantedBy=timers.target
+EOF
+
+# Enable User Timer
+systemctl --user daemon-reload
+systemctl --user enable ytdaily.timer
+systemctl --user start ytdaily.timer
+
+echo -e "${GREEN}✅ Installation complete!${NC}"
+echo -e "${GREEN}👉 You can now run 'ytdaily' from your terminal.${NC}"
+echo -e "${BLUE}Note: You might need to restart your terminal or run 'source ~/.bashrc' (or .zshrc) to use the alias immediately.${NC}"
