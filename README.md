@@ -86,4 +86,4 @@ Settings and history are stored in `~/.YT_log/`. The script automatically handle
 
 ## License
 
-MIT
+Unlicense (Public Domain)
