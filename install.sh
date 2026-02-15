@@ -15,19 +15,25 @@ echo -e "${BLUE}🚀 Starting yt-daily installation...${NC}"
 # 1. Detect Package Manager and Install System Dependencies
 echo -e "${BLUE}🔍 Checking for system dependencies...${NC}"
 if command -v pacman >/dev/null; then
-    sudo pacman -S --needed --noconfirm yt-dlp ffmpeg python-pip
+    # Arch Linux - Prefer system packages over pip
+    sudo pacman -S --needed --noconfirm yt-dlp ffmpeg python-rich
 elif command -v apt-get >/dev/null; then
+    # Debian/Ubuntu
     sudo apt-get update
-    sudo apt-get install -y yt-dlp ffmpeg python3-pip
+    sudo apt-get install -y yt-dlp ffmpeg python3-rich
 elif command -v dnf >/dev/null; then
-    sudo dnf install -y yt-dlp ffmpeg python3-pip
+    # Fedora
+    sudo dnf install -y yt-dlp ffmpeg python3-rich
 else
-    echo -e "${RED}❌ Multi-distro support: Package manager not recognized. Please install yt-dlp, ffmpeg, and python3-pip manually.${NC}"
+    echo -e "${RED}❌ Multi-distro support: Package manager not recognized. Please install yt-dlp, ffmpeg, and python-rich manually.${NC}"
 fi
 
-# 2. Install Python Dependencies
-echo -e "${BLUE}📦 Installing Python libraries...${NC}"
-pip3 install rich yt-dlp --upgrade --user || pip install rich yt-dlp --upgrade --user
+# 2. Python Environment Check
+# If rich isn't found, try to install it via pip with a bypass or venv (for Arch/other restricted distros)
+if ! python3 -c "import rich" &>/dev/null; then
+    echo -e "${BLUE}📦 System packages missing, trying pip...${NC}"
+    pip3 install rich --upgrade --user --break-system-packages || pip3 install rich --upgrade --user || echo -e "${RED}⚠️ Could not install rich automatically. Please install it manually.${NC}"
+fi
 
 # 3. Create Application Directory
 INSTALL_DIR="$HOME/.local/share/yt-daily"
