@@ -1048,7 +1048,7 @@ class YouTubeFeedDownloader:
             output_template = str(self.config.current_audio_dir / "%(title)s.%(ext)s")
             cmd = [
                 "yt-dlp",
-                "-f", "bestaudio[ext=m4a]/bestaudio/best",
+                "-f", "bestaudio[ext=m4a]/bestaudio",
                 "--extract-audio",
                 "--audio-format", "mp3", 
                 "--audio-quality", "320K",
@@ -1116,7 +1116,7 @@ class YouTubeFeedDownloader:
         
         cmd = [
             "yt-dlp",
-            "-f", "bestaudio[ext=m4a]/bestaudio/best",
+            "-f", "bestaudio[ext=m4a]/bestaudio",
             "--extract-audio",
             "--audio-format", "mp3",
             "--audio-quality", "320K",
@@ -1155,7 +1155,7 @@ class YouTubeFeedDownloader:
             
             cmd = [
                 "yt-dlp",
-                "-f", "bestaudio[ext=m4a]/bestaudio/best",
+                "-f", "bestaudio[ext=m4a]/bestaudio",
                 "--extract-audio",
                 "--audio-format", "mp3", 
                 "--audio-quality", "320K",
@@ -2342,7 +2342,7 @@ class YouTubeFeedDownloader:
         video_info = self.get_all_recent_videos(url, "Single Audio", max_videos=1, silent=True)
         if video_info:
             print("🔍 Getting video information...")
-            print("   ✅ Video found")
+            print("   ✅ Audio source found")
             video_info_data = video_info[0]
             
             # Check for existing file before trying to download
@@ -2358,7 +2358,7 @@ class YouTubeFeedDownloader:
                 print("❌ Audio download failed")
         else:
             print("🔍 Getting video information...")
-            print("   ❌ No video found or error")
+            print("   ❌ No audio source found or error")
 
     def show_statistics(self):
         """Show download statistics."""
