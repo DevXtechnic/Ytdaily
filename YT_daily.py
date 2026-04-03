@@ -2507,9 +2507,9 @@ class YouTubeFeedDownloader:
                 except ValueError:
                     print("❌ Please enter a valid number")
             elif choice == "6":
-                print("\nAvailable resolutions: 360, 480, 720, 1080, 1440, 2160")
+                print("\nAvailable resolutions: 144, 240, 360, 480, 720, 1080, 1440, 2160")
                 entered_res = input(f"Enter max resolution (current: {self.config.max_resolution}): ").strip()
-                if entered_res in ["360", "480", "720", "1080", "1440", "2160"]:
+                if entered_res in ["144", "240", "360", "480", "720", "1080", "1440", "2160"]:
                     self.config.max_resolution = entered_res
                     print(f"✅ Max resolution set to: {entered_res}p")
                 else:
