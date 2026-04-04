@@ -1566,7 +1566,7 @@ class YouTubeFeedDownloader:
     
     def _save_download_success(self, video_info: Dict[str, Any], source_name: str, video_title: str, is_audio: bool = False) -> None:
         """Save download success information."""
-        download_type = "MP3 Audio (320kbps)" if is_audio else "720p MP4"
+        download_type = "MP3 Audio (320kbps)" if is_audio else f"{self.config.max_resolution}p MP4"
         self.save_last_download({
             "source": source_name,
             "title": video_title,
