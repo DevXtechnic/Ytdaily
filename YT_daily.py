@@ -2172,7 +2172,7 @@ class YouTubeFeedDownloader:
             return
         
         print("\n🎯 Select download type:")
-        print("   1. 🎬 Video Playlist (720p MP4)")
+        print(f"   1. 🎬 Video Playlist ({self.config.max_resolution}p MP4)")
         print("   2. 🎧 Audio/Podcast (320kbps MP3)")
         
         type_choice = input("\nSelect option (1-2): ").strip()
@@ -2534,9 +2534,16 @@ class YouTubeFeedDownloader:
             print(f"👤 Uploader: {playlist_info['uploader']}")
             print(f"🎬 Videos: {playlist_info['video_count']}")
             
+            # Determine playlist directory
+            safe_name = re.sub(r'[<>:"/\\|?*]', '', playlist_name)
+            if download_type == "audio":
+                playlist_dir = self.config.current_podcast_dir / safe_name
+            else:
+                playlist_dir = self.config.current_playlist_dir / safe_name
+                
             # Determine start index based on existing files to fix resume logic
             start_index = 1
-            if playlist_dir and playlist_dir.exists():
+            if playlist_dir.exists():
                 existing_files = list(playlist_dir.glob("*.mp4")) + list(playlist_dir.glob("*.mp3")) + list(playlist_dir.glob("*.mkv"))
                 # This is a rough heuristic. Ideally we'd match IDs.
                 # But if we assume sequential download, count + 1 is a good start.
