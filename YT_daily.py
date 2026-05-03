@@ -1096,6 +1096,8 @@ class YouTubeFeedDownloader:
         # Add resume support if requested
         if resume:
             cmd.append("--continue")
+        else:
+            cmd.append("--no-continue")
         
         if not skip_subs and not is_audio:
             cmd.extend([
@@ -1140,12 +1142,14 @@ class YouTubeFeedDownloader:
         # Add resume support if requested
         if resume:
             cmd.append("--continue")
+        else:
+            cmd.append("--no-continue")
         
         cmd.append(video_url)
         
         return cmd
     
-    def build_playlist_download_command(self, playlist_url: str, playlist_name: str, download_type: str = "video", resume: bool = False, resume_from: int = 1) -> Tuple[List[str], Path]:
+    def build_playlist_download_command(self, playlist_url: str, playlist_name: str, download_type: str = "video", resume: bool = False) -> Tuple[List[str], Path]:
         """Build the yt-dlp command for downloading entire playlists with video/audio options and resume support."""
         safe_name = re.sub(r'[<>:"/\\|?*]', '', playlist_name)
         
@@ -1204,9 +1208,8 @@ class YouTubeFeedDownloader:
         # Add resume support if requested
         if resume:
             cmd.append("--continue")
-            # Start from specific playlist item if resuming
-            if resume_from > 1:
-                cmd.extend(["--playlist-start", str(resume_from)])
+        else:
+            cmd.append("--no-continue")
         
         cmd.append(playlist_url)
         
@@ -1441,17 +1444,10 @@ class YouTubeFeedDownloader:
             
         # HTTP 416 Error handling (corrupted .part cache data)
         if not success and "416" in error_msg:
-            if not progress:
+            if progress is None:
                 print(f"   ⚠️ Cache error detected (HTTP 416), retrying clean...")
-            # Look for and remove corrupted .part/.ytdl files specific to this video
-            target_dir = self.config.current_audio_dir if is_audio else self.config.current_video_dir
-            for f in target_dir.glob(f"*{video_id}*.part"):
-                try: f.unlink()
-                except: pass
-            for f in target_dir.glob(f"*{video_id}*.ytdl"):
-                try: f.unlink()
-                except: pass
-            
+            # Rather than globbing for .part files which are silenced by --no-part,
+            # we force yt-dlp to ignore tracking logs and forcibly restart with --no-continue
             cmd = self.build_download_command(video_url, source_name, skip_subs=not has_subtitles, is_manual=is_manual, resume=False, is_audio=is_audio)
             success, video_id, _ = self._execute_download(cmd, video_info, source_name, is_audio=is_audio, progress=progress, task_id=task_id)
         
@@ -1470,9 +1466,10 @@ class YouTubeFeedDownloader:
             
             return True, video_id
         else:
-            print(f"   ❌ Download failed")
-            if error_msg:
-                print(f"   Error: {error_msg[:100]}")
+            if progress is None:
+                print(f"   ❌ Download failed")
+                if error_msg:
+                    print(f"   Error: {error_msg[:100]}")
             # Keep resume state for failed downloads
             return False, video_id
 
@@ -2557,37 +2554,19 @@ class YouTubeFeedDownloader:
             else:
                 playlist_dir = self.config.current_playlist_dir / safe_name
                 
-            # Determine start index based on existing files to fix resume logic
-            start_index = 1
-            if playlist_dir.exists():
-                existing_files = list(playlist_dir.glob("*.mp4")) + list(playlist_dir.glob("*.mp3")) + list(playlist_dir.glob("*.mkv"))
-                # This is a rough heuristic. Ideally we'd match IDs.
-                # But if we assume sequential download, count + 1 is a good start.
-                # A better way is using yt-dlp's download archive which we should enable.
-                start_index = len(existing_files) + 1
-            
             # Use download archive to prevent re-downloading without cluttering media directory
             archives_dir = self.config.log_dir / "archives"
             archives_dir.mkdir(parents=True, exist_ok=True)
             download_archive = archives_dir / f"{safe_name}_archive.txt"
             
             cmd, playlist_dir = self.build_playlist_download_command(
-                playlist_url, playlist_name, download_type, resume=True, resume_from=start_index
+                playlist_url, playlist_name, download_type, resume=True
             )
             
             # Add archive file to command
             cmd.extend(["--download-archive", str(download_archive)])
             
-            # Add playlist items start index if significant
-            if start_index > 1:
-                 # Check if we really want to skip. 
-                 # Often it's safer to let archive handle it, but for large playlists skipping is faster.
-                 # Let's subtract a small buffer to be safe (e.g. 5) in case of deletions/reordering
-                 safe_start = max(1, start_index - 5)
-                 cmd.extend(["--playlist-start", str(safe_start)])
-            
             print(f"📁 Downloading to: {playlist_dir}")
-            print(f"🔄 Resuming from video #{start_index} (approx)")
             
             process = subprocess.Popen(
                 cmd,
@@ -2641,11 +2620,15 @@ class YouTubeFeedDownloader:
             
             return_code = process.wait()
             
-            if return_code == 0:
+            # yt-dlp often returns 1 if some videos in the playlist were skipped (e.g. unavailable, or in archive limit)
+            # As long as there are files inside the target directory, it can be considered a success
+            has_files = any(playlist_dir.iterdir()) if playlist_dir.exists() else False
+            
+            if return_code == 0 or (return_code == 1 and has_files):
                 print(f"\n\n✅ Playlist download complete: {playlist_name}")
                 return True, playlist_dir
             else:
-                print(f"\n\n❌ Playlist download failed")
+                print(f"\n\n❌ Playlist download completed with errors/skips")
                 return False, playlist_dir
                 
         except Exception as e:
