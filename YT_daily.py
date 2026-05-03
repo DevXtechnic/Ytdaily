@@ -2550,8 +2550,10 @@ class YouTubeFeedDownloader:
                 # A better way is using yt-dlp's download archive which we should enable.
                 start_index = len(existing_files) + 1
             
-            # Use download archive to preventing re-downloading
-            download_archive = playlist_dir / "download_archive.txt"
+            # Use download archive to prevent re-downloading without cluttering media directory
+            archives_dir = Path.home() / ".YT_archives"
+            archives_dir.mkdir(parents=True, exist_ok=True)
+            download_archive = archives_dir / f"{safe_name}_archive.txt"
             
             cmd, playlist_dir = self.build_playlist_download_command(
                 playlist_url, playlist_name, download_type, resume=True, resume_from=start_index
