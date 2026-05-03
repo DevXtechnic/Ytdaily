@@ -1260,19 +1260,19 @@ class YouTubeFeedDownloader:
         """Display dual progress bars for playlist downloads."""
         # Current video progress bar
         current_filled = int(width * current_percent / 100)
-        current_bar = f"[green]{'█' * current_filled}[/green][dim]{'░' * (width - current_filled)}[/dim]"
+        current_bar = f"\033[32m{'█' * current_filled}\033[0m\033[2m{'░' * (width - current_filled)}\033[0m"
         
         # Overall playlist progress bar  
         overall_filled = int(width * overall_percent / 100)
-        overall_bar = f"[blue]{'█' * overall_filled}[/blue][dim]{'░' * (width - overall_filled)}[/dim]"
+        overall_bar = f"\033[34m{'█' * overall_filled}\033[0m\033[2m{'░' * (width - overall_filled)}\033[0m"
         
         # Print with cursor control
         # \033[K clears the line.
         # We print two lines.
         # First Line: Current
-        print(f"\r\033[K   [bold]Cur:[/bold] [{current_bar}] {current_percent:5.1f}% {current_speed} ETA:{current_eta}", end="")
+        print(f"\r\033[K   \033[1mCur:\033[0m [{current_bar}] {current_percent:5.1f}% {current_speed} ETA:{current_eta}", end="")
         # Second Line: Overall (with newline)
-        print(f"\n\r\033[K   [bold]Tot:[/bold] [{overall_bar}] {overall_percent:5.1f}% {current_info}", end="")
+        print(f"\n\r\033[K   \033[1mTot:\033[0m [{overall_bar}] {overall_percent:5.1f}% {current_info}", end="")
         # Move cursor back up one line so next update overwrites 'Cur' then 'Tot'
         print(f"\033[A", end="") 
         sys.stdout.flush()
