@@ -1438,6 +1438,22 @@ class YouTubeFeedDownloader:
                 print(" ⚠️ (No subtitles available)")
             cmd = self.build_download_command(video_url, source_name, skip_subs=True, is_manual=is_manual, resume=resume, is_audio=is_audio)
             success, video_id, error_msg = self._execute_download(cmd, video_info, source_name, is_audio=is_audio, progress=progress, task_id=task_id)
+            
+        # HTTP 416 Error handling (corrupted .part cache data)
+        if not success and "416" in error_msg:
+            if not progress:
+                print(f"   ⚠️ Cache error detected (HTTP 416), retrying clean...")
+            # Look for and remove corrupted .part/.ytdl files specific to this video
+            target_dir = self.config.current_audio_dir if is_audio else self.config.current_video_dir
+            for f in target_dir.glob(f"*{video_id}*.part"):
+                try: f.unlink()
+                except: pass
+            for f in target_dir.glob(f"*{video_id}*.ytdl"):
+                try: f.unlink()
+                except: pass
+            
+            cmd = self.build_download_command(video_url, source_name, skip_subs=not has_subtitles, is_manual=is_manual, resume=False, is_audio=is_audio)
+            success, video_id, _ = self._execute_download(cmd, video_info, source_name, is_audio=is_audio, progress=progress, task_id=task_id)
         
         if success:
             if has_subtitles and not is_audio:
@@ -2551,7 +2567,7 @@ class YouTubeFeedDownloader:
                 start_index = len(existing_files) + 1
             
             # Use download archive to prevent re-downloading without cluttering media directory
-            archives_dir = Path.home() / ".YT_archives"
+            archives_dir = self.config.log_dir / "archives"
             archives_dir.mkdir(parents=True, exist_ok=True)
             download_archive = archives_dir / f"{safe_name}_archive.txt"
             
@@ -2626,10 +2642,10 @@ class YouTubeFeedDownloader:
             return_code = process.wait()
             
             if return_code == 0:
-                print(f"\n✅ Playlist download complete: {playlist_name}")
+                print(f"\n\n✅ Playlist download complete: {playlist_name}")
                 return True, playlist_dir
             else:
-                print(f"\n❌ Playlist download failed")
+                print(f"\n\n❌ Playlist download failed")
                 return False, playlist_dir
                 
         except Exception as e:
