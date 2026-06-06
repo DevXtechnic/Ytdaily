@@ -87,6 +87,7 @@ systemctl --user status Ytdaily.service
 
 - 🎯 **Multi-Quality Support**: Target any resolution from 360p to 4K (2160p).
 - 📻 **Podcast Automation**: Automatically converts specific sources to high-fidelity 320kbps MP3s.
+- 🍪 **Smart Cookie Auth**: Auto-detects your browser (Brave, Chrome, Chromium, Firefox, Edge, Opera, Vivaldi) and uses its cookies to bypass YouTube's bot detection. Fully configurable — set a specific browser or disable via `none`.
 - 🧹 **Dynamic Cleanup**: Set a retention policy (e.g., 60 days) to keep your storage lean.
 - 🌍 **Subtitles & Metadata**: Embeds official and auto-generated subtitles, thumbnails, and metadata into the MP4 container.
 

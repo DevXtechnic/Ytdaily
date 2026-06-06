@@ -8,6 +8,7 @@ import json
 import logging
 import logging.handlers
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -88,6 +89,38 @@ class Config:
     filter_shorts: bool = True  # Skip videos shorter than 60 seconds
     ask_video_limit_per_channel: bool = False  # Ask for video limit for every channel
     gap_check_limit: int = 10 # How many videos to check to find the "gap" since last run
+    browser: str = "auto"  # Browser for cookies: auto, brave, chrome, chromium, firefox, edge, opera, vivaldi, none
+
+    # Supported browsers for cookie extraction (yt-dlp --cookies-from-browser)
+    SUPPORTED_BROWSERS: tuple = ("brave", "chrome", "chromium", "firefox", "edge", "opera", "vivaldi", "safari")
+
+    @staticmethod
+    def detect_browser() -> str:
+        """Auto-detect the first available browser for cookie extraction."""
+        # Priority order: most common browsers first
+        browser_commands = {
+            "brave": ["brave", "brave-browser"],
+            "chrome": ["google-chrome", "google-chrome-stable"],
+            "chromium": ["chromium", "chromium-browser"],
+            "firefox": ["firefox"],
+            "edge": ["microsoft-edge", "microsoft-edge-stable"],
+            "opera": ["opera"],
+            "vivaldi": ["vivaldi", "vivaldi-stable"],
+        }
+        for browser_name, commands in browser_commands.items():
+            for cmd in commands:
+                if shutil.which(cmd):
+                    return browser_name
+        return "none"
+
+    def get_cookie_args(self) -> list:
+        """Return yt-dlp cookie arguments based on browser setting."""
+        browser = self.browser
+        if browser == "auto":
+            browser = self.detect_browser()
+        if browser and browser != "none":
+            return ["--cookies-from-browser", browser]
+        return []
 
     
     def __post_init__(self):
@@ -542,6 +575,7 @@ class YouTubeFeedDownloader:
                     self.config.initial_videos_per_channel = config_data.get("initial_videos_per_channel", 5)
                     self.config.max_videos_per_channel = config_data.get("max_videos_per_channel", 100)
                     self.config.max_resolution = config_data.get("max_resolution", "720")
+                    self.config.browser = config_data.get("browser", "auto")
                     
                     if (file_channels != merged_channels or file_playlists != merged_playlists):
                         self.save_config()
@@ -565,7 +599,8 @@ class YouTubeFeedDownloader:
                 "ask_initial_videos": self.config.ask_initial_videos,
                 "initial_videos_per_channel": self.config.initial_videos_per_channel,
                 "max_videos_per_channel": self.config.max_videos_per_channel,
-                "max_resolution": self.config.max_resolution
+                "max_resolution": self.config.max_resolution,
+                "browser": self.config.browser
             }
             with open(self.config.config_path, 'w', encoding='utf-8') as f:
                 json.dump(config_data, f, indent=2, ensure_ascii=False)
@@ -794,6 +829,7 @@ class YouTubeFeedDownloader:
                     "--playlist-items", f"1-{max_videos}",
                     "--dump-json",
                     "--no-warnings",
+                    *self.config.get_cookie_args(),
                     url
                 ]
                 
@@ -895,6 +931,7 @@ class YouTubeFeedDownloader:
                         "--playlist-items", str(i),
                         "--print", "%(id)s\t%(title)s\t%(uploader)s\t%(duration)s",
                         "--no-warnings",
+                        *self.config.get_cookie_args(),
                         url
                     ]
                     
@@ -945,7 +982,7 @@ class YouTubeFeedDownloader:
                 "yt-dlp",
                 "--list-subs",
                 "--no-warnings",
-                "--no-cookies",
+                *self.config.get_cookie_args(),
                 video_url
             ]
             
@@ -984,6 +1021,7 @@ class YouTubeFeedDownloader:
                 "--print", "%(uploader)s",
                 "--no-download",
                 "--no-warnings",
+                *self.config.get_cookie_args(),
                 playlist_url
             ]
             
@@ -1016,6 +1054,7 @@ class YouTubeFeedDownloader:
                     "--print", "%(title)s",
                     "--no-download",
                     "--no-warnings",
+                    *self.config.get_cookie_args(),
                     playlist_url
                 ]
                 
@@ -1048,11 +1087,11 @@ class YouTubeFeedDownloader:
             output_template = str(self.config.current_audio_dir / "%(title)s.%(ext)s")
             cmd = [
                 "yt-dlp",
-                "-f", "bestaudio[ext=m4a]/bestaudio",
+                "-f", "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
                 "--extract-audio",
                 "--audio-format", "mp3", 
                 "--audio-quality", "320K",
-                "--no-cookies",
+                *self.config.get_cookie_args(),
                 "--no-cache-dir",
                 "--no-part",
                 "--no-mtime",
@@ -1074,7 +1113,7 @@ class YouTubeFeedDownloader:
                 "yt-dlp",
                 "-f", f"bestvideo[height<={self.config.max_resolution}]+bestaudio/best[height<={self.config.max_resolution}]",
                 "--merge-output-format", "mp4",
-                "--no-cookies",
+                *self.config.get_cookie_args(),
                 "--no-cache-dir",
                 "--no-part",
                 "--no-mtime",
@@ -1118,11 +1157,11 @@ class YouTubeFeedDownloader:
         
         cmd = [
             "yt-dlp",
-            "-f", "bestaudio[ext=m4a]/bestaudio",
+            "-f", "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
             "--extract-audio",
             "--audio-format", "mp3",
             "--audio-quality", "320K",
-            "--no-cookies",
+            *self.config.get_cookie_args(),
             "--no-cache-dir", 
             "--no-part",
             "--no-mtime",
@@ -1159,11 +1198,11 @@ class YouTubeFeedDownloader:
             
             cmd = [
                 "yt-dlp",
-                "-f", "bestaudio[ext=m4a]/bestaudio",
+                "-f", "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
                 "--extract-audio",
                 "--audio-format", "mp3", 
                 "--audio-quality", "320K",
-                "--no-cookies",
+                *self.config.get_cookie_args(),
                 "--no-cache-dir",
                 "--no-part",
                 "--no-mtime",
@@ -1187,7 +1226,7 @@ class YouTubeFeedDownloader:
                 "yt-dlp",
                 "-f", f"bestvideo[height<={self.config.max_resolution}]+bestaudio/best[height<={self.config.max_resolution}]",
                 "--merge-output-format", "mp4",
-                "--no-cookies",
+                *self.config.get_cookie_args(),
                 "--no-cache-dir",
                 "--no-part",
                 "--no-mtime",
@@ -2389,7 +2428,11 @@ class YouTubeFeedDownloader:
         config_table.add_row("📺 Channels monitored", str(len(self.channels)))
         config_table.add_row("📋 Playlists monitored", str(len(self.playlists)))
         config_table.add_row("⚡ Parallel downloads", str(self.config.max_parallel_downloads))
-        config_table.add_row("🔒 Privacy mode", "Enabled")
+        browser_display = self.config.browser
+        if browser_display == "auto":
+            detected = Config.detect_browser()
+            browser_display = f"auto ({detected})"
+        config_table.add_row("🍪 Browser cookies", browser_display)
         config_table.add_row("🔄 Resume cache", f"{self.config.resume_cache_days} days")
         config_table.add_row("✅ First run completed", 'Yes' if not self.is_first_run() else 'No')
         config_table.add_row("🔔 Ask for recent videos", 'Yes' if self.config.ask_initial_videos else 'No')
@@ -2470,9 +2513,14 @@ class YouTubeFeedDownloader:
             print(f"4. 📺 Auto-download recent videos on first run: {self.config.initial_videos_per_channel}")
             print(f"5. 📊 Max videos to check per channel: {self.config.max_videos_per_channel}")
             print(f"6. 🎥 Max Video Quality: {self.config.max_resolution}p")
-            print("7. ↩️ Back to main menu")
+            browser_display = self.config.browser
+            if browser_display == "auto":
+                detected = Config.detect_browser()
+                browser_display = f"auto (detected: {detected})"
+            print(f"7. 🍪 Browser for cookies: {browser_display}")
+            print("8. ↩️ Back to main menu")
             
-            choice = input("\nSelect option (1-7): ").strip()
+            choice = input("\nSelect option (1-8): ").strip()
             
             if choice == "1":
                 try:
@@ -2529,6 +2577,25 @@ class YouTubeFeedDownloader:
                     print("❌ Invalid resolution. Please perform the selection again.")
 
             elif choice == "7":
+                print(f"\nAvailable options: auto, {', '.join(Config.SUPPORTED_BROWSERS)}, none")
+                print("  'auto' = auto-detect installed browser")
+                print("  'none' = disable cookie authentication")
+                entered_browser = input(f"Enter browser (current: {self.config.browser}): ").strip().lower()
+                valid_options = ["auto", "none"] + list(Config.SUPPORTED_BROWSERS)
+                if entered_browser in valid_options:
+                    self.config.browser = entered_browser
+                    if entered_browser == "auto":
+                        detected = Config.detect_browser()
+                        print(f"✅ Browser set to: auto (detected: {detected})")
+                    elif entered_browser == "none":
+                        print("✅ Cookie authentication disabled")
+                        print("   ⚠️  Some videos may fail with 'Sign in to confirm you're not a bot'")
+                    else:
+                        print(f"✅ Browser set to: {entered_browser}")
+                else:
+                    print("❌ Invalid browser. Please select from the available options.")
+
+            elif choice == "8":
                 self.save_config()
                 break
             else:
@@ -2577,7 +2644,7 @@ class YouTubeFeedDownloader:
                 universal_newlines=True
             )
             
-            current_video = start_index 
+            current_video = 1 
             total_videos = playlist_info["video_count"]
             current_video_idx = 0 # Track actual index from output
             
